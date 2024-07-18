@@ -224,7 +224,7 @@ def autodoc_skip_member_handler(app, what, name, obj, skip, options):
         s = str(obj).strip()
         if s.startswith("<Attribute") and "_yamlized_" in s:
             return True
-    except:  # noqa: bare-except
+    except Exception:
         pass
 
     return name.startswith("_") or name in excludes
@@ -294,9 +294,10 @@ apidoc_output_dir = APIDOC_REL
 apidoc_separate_modules = True
 apidoc_module_first = True
 
-# Napoleon settings listed here so we know what's configurable and can track changes (for numpy docstrings)
+# Napoleon settings listed here so we know what's configurable and can track changes (for numpy
+# docstrings)
 napoleon_google_docstring = False
-napoleon_numpy_docstring = True
+napoleon_np_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_include_private_with_doc = False
 napoleon_include_special_with_doc = False
