@@ -16,7 +16,7 @@
 import os
 import unittest
 
-import numpy as np
+import numpy
 from scipy.sparse import csc_matrix
 
 from armi import nuclearDataIO
@@ -149,7 +149,7 @@ class TestCompxs(unittest.TestCase):
         }
         for xsName, expectedXS in expectedMacros.items():
             actualXS = self.fissileRegion.macros[xsName]
-            self.assertTrue(np.allclose(actualXS, expectedXS))
+            self.assertTrue(numpy.allclose(actualXS, expectedXS))
 
     def test_totalScatterMatrix(self):
         """
@@ -164,7 +164,7 @@ class TestCompxs(unittest.TestCase):
         --------
         scipy.sparse.csc_matrix
         """
-        expectedSparseData = np.array(
+        expectedSparseData = numpy.array(
             [
                 1.15905297e-01,
                 1.50461698e-01,
@@ -290,7 +290,7 @@ class TestCompxs(unittest.TestCase):
             actualTotalScatter.shape,
         ).toarray()
 
-        self.assertTrue(np.allclose(actualTotalScatter, expectedTotalScatter))
+        self.assertTrue(numpy.allclose(actualTotalScatter, expectedTotalScatter))
 
     def test_binaryRW(self):
         """Test to make sure the binary read/writer reads/writes the exact same library."""

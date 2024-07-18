@@ -213,7 +213,7 @@ class CaseSuite:
             with directoryChangers.DirectoryChanger(case.directory):
                 try:
                     case.run()
-                except Exception:
+                except:  # noqa: bare-except
                     # allow all errors and continue to next run
                     runLog.error(f"{case} failed during execution.")
                     traceback.print_exc()

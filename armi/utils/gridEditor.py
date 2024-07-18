@@ -58,7 +58,8 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 
 import wx
 import wx.adv
-import numpy as np
+import numpy
+import numpy.linalg
 
 from armi.utils import hexagon
 from armi.utils import textProcessors
@@ -80,45 +81,45 @@ UNIT_MARGIN = 40  # offset applied to the draw area margins
 # what the Nones are for below. Future work to employ these. Colors are RGB fractions.
 FLAG_STYLES = {
     # Red
-    Flags.FUEL: (np.array([1.0, 0.0, 0.0]), None),
+    Flags.FUEL: (numpy.array([1.0, 0.0, 0.0]), None),
     # Green
-    Flags.CONTROL: (np.array([0.0, 1.0, 0.0]), None),
+    Flags.CONTROL: (numpy.array([0.0, 1.0, 0.0]), None),
     # Gray
-    Flags.SHIELD: (np.array([0.4, 0.4, 0.4]), None),
+    Flags.SHIELD: (numpy.array([0.4, 0.4, 0.4]), None),
     # Yellow
-    Flags.REFLECTOR: (np.array([0.5, 0.5, 0.0]), None),
+    Flags.REFLECTOR: (numpy.array([0.5, 0.5, 0.0]), None),
     # Paisley?
-    Flags.INNER: (np.array([0.5, 0.5, 1.0]), None),
+    Flags.INNER: (numpy.array([0.5, 0.5, 1.0]), None),
     # We shouldn't see many SECONDARY, OUTER, MIDDLE, etc. on their own, so these
     # will just darken or brighten whatever color we would otherwise get)
-    Flags.SECONDARY: (np.array([0.0, 0.0, 0.0]), None),
-    Flags.OUTER: (np.array([0.0, 0.0, 0.0]), None),
+    Flags.SECONDARY: (numpy.array([0.0, 0.0, 0.0]), None),
+    Flags.OUTER: (numpy.array([0.0, 0.0, 0.0]), None),
     # WHITE (same as above, this will just lighten anything that it accompanies)
-    Flags.MIDDLE: (np.array([1.0, 1.0, 1.0]), None),
-    Flags.ANNULAR: (np.array([1.0, 1.0, 1.0]), None),
-    Flags.IGNITER: (np.array([0.2, 0.2, 0.2]), None),
-    Flags.STARTER: (np.array([0.4, 0.4, 0.4]), None),
-    Flags.FEED: (np.array([0.6, 0.6, 0.6]), None),
-    Flags.DRIVER: (np.array([0.8, 0.8, 0.8]), None),
+    Flags.MIDDLE: (numpy.array([1.0, 1.0, 1.0]), None),
+    Flags.ANNULAR: (numpy.array([1.0, 1.0, 1.0]), None),
+    Flags.IGNITER: (numpy.array([0.2, 0.2, 0.2]), None),
+    Flags.STARTER: (numpy.array([0.4, 0.4, 0.4]), None),
+    Flags.FEED: (numpy.array([0.6, 0.6, 0.6]), None),
+    Flags.DRIVER: (numpy.array([0.8, 0.8, 0.8]), None),
 }
 
 # RGB weights for calculating luminance. We use this to decide whether we should put
 # white or black text on top of the color. These come from CCIR 601
-LUMINANCE_WEIGHTS = np.array([0.3, 0.59, 0.11])
+LUMINANCE_WEIGHTS = numpy.array([0.3, 0.59, 0.11])
 
 
 def _translationMatrix(x, y):
     """Return an affine transformation matrix representing an x- and y-translation."""
-    return np.array([[1.0, 0.0, x], [0.0, 1.0, y], [0.0, 0.0, 1.0]])
+    return numpy.array([[1.0, 0.0, x], [0.0, 1.0, y], [0.0, 0.0, 1.0]])
 
 
-def _boundingBox(points: Sequence[np.ndarray]) -> wx.Rect:
+def _boundingBox(points: Sequence[numpy.ndarray]) -> wx.Rect:
     """Return the smallest wx.Rect that contains all of the passed points."""
-    xmin = np.amin([p[0] for p in points])
-    xmax = np.amax([p[0] for p in points])
+    xmin = numpy.amin([p[0] for p in points])
+    xmax = numpy.amax([p[0] for p in points])
 
-    ymin = np.amin([p[1] for p in points])
-    ymax = np.amax([p[1] for p in points])
+    ymin = numpy.amin([p[1] for p in points])
+    ymax = numpy.amax([p[1] for p in points])
 
     return wx.Rect(wx.Point(int(xmin), int(ymin)), wx.Point(int(xmax), int(ymax)))
 
@@ -127,12 +128,12 @@ def _desaturate(c: Sequence[float]):
     r, g, b = tuple(c)
     hue, lig, sat = colorsys.rgb_to_hls(r, g, b)
     lig = lig + (1.0 - lig) * 0.5
-    return np.array(colorsys.hls_to_rgb(hue, lig, sat))
+    return numpy.array(colorsys.hls_to_rgb(hue, lig, sat))
 
 
 def _getColorAndBrushFromFlags(f, bold=True):
     """Given a set of Flags, return a wx.Pen and wx.Brush with which to draw a shape."""
-    c = np.array([0.0, 0.0, 0.0])
+    c = numpy.array([0.0, 0.0, 0.0])
     nColors = 0
 
     for styleFlag, style in FLAG_STYLES.items():
@@ -164,8 +165,8 @@ def _getColorAndBrushFromFlags(f, bold=True):
 def _drawShape(
     dc: wx.DC,
     geom: geometry.GeomType,
-    view: np.ndarray,
-    model: Optional[np.ndarray] = None,
+    view: numpy.ndarray,
+    model: Optional[numpy.ndarray] = None,
     label: str = "",
     description: Optional[str] = None,
     bold: bool = True,
@@ -180,9 +181,9 @@ def _drawShape(
         The device context to draw to
     geom: geometry.GeomType
         The geometry type, which defines the shape to be drawn
-    view: np.ndarray
+    view: numpy.ndarray
         A 3x3 matrix defining the world transform
-    model: np.ndarray, optional
+    model: numpy.ndarray, optional
         A 3x3 matrix defining the model transform. No transform is made to the "unit"
         shape if no model transform is provided.
     label: str, optional
@@ -208,8 +209,8 @@ def _drawShape(
         raise ValueError("Geom type `{}` unsupported".format(geom))
 
     # Appending 1 to each coordinate since the transformation matrix is 3x3
-    poly = np.array([np.append(vertex, 1) for vertex in primitive]).transpose()
-    model = model if model is not None else np.eye(3)
+    poly = numpy.array([numpy.append(vertex, 1) for vertex in primitive]).transpose()
+    model = model if model is not None else numpy.eye(3)
     poly = view.dot(model).dot(poly).transpose()
     poly = [wx.Point(int(vertex[0]), int(vertex[1])) for vertex in poly]
 
@@ -456,15 +457,15 @@ class _AssemblyPalette(wx.ScrolledWindow):
 
         for key, design in self.assemDesigns.items():
             # flip y-coordinates, enlarge, offset
-            flip_y = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0]])
-            scale = np.array(
+            flip_y = numpy.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0]])
+            scale = numpy.array(
                 [
                     [UNIT_SIZE * 0.8, 0.0, 0.0],
                     [0.0, UNIT_SIZE * 0.8, 0.0],
                     [0.0, 0.0, 1.0],
                 ]
             )
-            translate = np.array(
+            translate = numpy.array(
                 [
                     [1.0, 0.0, UNIT_SIZE * 0.5],
                     [0.0, 1.0, UNIT_SIZE * 0.5],
@@ -849,8 +850,8 @@ class GridGui(wx.ScrolledWindow):
         gridScale = self._gridScale(self.grid)
 
         # flip y-coordinates, enlarge
-        flip_y = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0]])
-        scale = np.array(
+        flip_y = numpy.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0]])
+        scale = numpy.array(
             [
                 [UNIT_SIZE / gridScale[0], 0.0, 0.0],
                 [0.0, UNIT_SIZE / gridScale[1], 0.0],
@@ -859,7 +860,7 @@ class GridGui(wx.ScrolledWindow):
         )
 
         # uniform grid, so all shapes have the same scale
-        model = np.array(
+        model = numpy.array(
             [[gridScale[0], 0.0, 0.0], [0.0, gridScale[1], 0.0], [0.0, 0.0, 1.0]]
         )
         self.transform = flip_y.dot(scale)
@@ -885,7 +886,7 @@ class GridGui(wx.ScrolledWindow):
 
             label, description, bold = self._getLabel(idx)
 
-            coords = np.array(self.grid.getCoordinates(idx))[:2]
+            coords = numpy.array(self.grid.getCoordinates(idx))[:2]
             offset = _translationMatrix(*coords)
 
             boundingBox = _drawShape(
@@ -1112,7 +1113,7 @@ class GridGui(wx.ScrolledWindow):
 
         # uniform grid, so all shapes have the same scale
         gridScale = self._gridScale(self.grid)
-        model = np.array(
+        model = numpy.array(
             [[gridScale[0], 0.0, 0.0], [0.0, gridScale[1], 0.0], [0.0, 0.0, 1.0]]
         )
 
@@ -1137,7 +1138,7 @@ class GridGui(wx.ScrolledWindow):
         self.pdc.ClearId(pdcId)
         self.pdc.SetId(pdcId)
 
-        coords = np.array(self.grid.getCoordinates(idx))
+        coords = numpy.array(self.grid.getCoordinates(idx))
         model = _translationMatrix(*coords[0:2]).dot(model)
 
         label, description, bold = self._getLabel(idx)
@@ -1161,11 +1162,11 @@ class GridGui(wx.ScrolledWindow):
         if isinstance(grid, grids.HexGrid):
             # Unit steps aren't aligned with the x,y coordinate system for Hex, so just
             # use the y dimension, assuming that's the proper flat-to-flat dimension
-            coordScale = np.array([grid._unitSteps[1][1]] * 2)
+            coordScale = numpy.array([grid._unitSteps[1][1]] * 2)
         elif isinstance(grid, grids.CartesianGrid):
             # Cartesian grids align with the GUI coordinates, so just use unit steps
             # directly
-            coordScale = np.array([grid._unitSteps[0][0], grid._unitSteps[1][1]])
+            coordScale = numpy.array([grid._unitSteps[0][0], grid._unitSteps[1][1]])
         return coordScale
 
     def _calcGridBounds(self) -> wx.Rect:
@@ -1184,13 +1185,15 @@ class GridGui(wx.ScrolledWindow):
 
         _ = self._gridScale(self.grid)
 
-        allCenters = np.array([self.grid.getCoordinates(idx)[:2] for idx in inDomain])
-        minXY = np.amin(allCenters, axis=0)
-        maxXY = np.amax(allCenters, axis=0)
+        allCenters = numpy.array(
+            [self.grid.getCoordinates(idx)[:2] for idx in inDomain]
+        )
+        minXY = numpy.amin(allCenters, axis=0)
+        maxXY = numpy.amax(allCenters, axis=0)
 
-        topRight = np.append([maxXY[1], maxXY[1]], 1.0)
-        bottomLeft = np.append([minXY[0], minXY[1]], 1.0)
-        nudge = np.array([UNIT_MARGIN, -UNIT_MARGIN, 0.0])
+        topRight = numpy.append([maxXY[1], maxXY[1]], 1.0)
+        bottomLeft = numpy.append([minXY[0], minXY[1]], 1.0)
+        nudge = numpy.array([UNIT_MARGIN, -UNIT_MARGIN, 0.0])
 
         bottomRight = (self.transform.dot(topRight) + nudge).tolist()
         topLeft = (self.transform.dot(bottomLeft) - nudge).tolist()

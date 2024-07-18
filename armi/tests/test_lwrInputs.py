@@ -16,7 +16,7 @@ from logging import WARNING
 import os
 import unittest
 
-import numpy as np
+import numpy
 
 from armi import Mode
 from armi import runLog
@@ -95,4 +95,4 @@ class C5G7ReactorTests(unittest.TestCase):
 
         for indices, coordsInput in sorted(locsInput.items()):
             coordsDB = locsDB[indices]
-            self.assertTrue(np.allclose(coordsInput, coordsDB))
+            self.assertTrue(numpy.allclose(coordsInput, coordsDB))

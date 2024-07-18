@@ -17,7 +17,7 @@ import types
 import unittest
 
 import h5py
-import numpy as np
+import numpy
 from numpy.testing import assert_allclose, assert_equal
 
 from armi import __version__ as version
@@ -105,6 +105,12 @@ class TestDatabaseInterface(unittest.TestCase):
             if os.path.exists(dirt):
                 os.remove(dirt)
 
+    def test_interactEveryNodeReturn(self):
+        """Test that the DB is NOT written to if cs["tightCoupling"] = True."""
+        self.o.cs["tightCoupling"] = True
+        self.dbi.interactEveryNode(0, 0)
+        self.assertFalse(self.dbi.database.hasTimeStep(0, 0))
+
     def test_interactBOL(self):
         self.assertIsNotNone(self.dbi._db)
         self.dbi.interactBOL()
@@ -118,56 +124,6 @@ class TestDatabaseInterface(unittest.TestCase):
         self.assertEqual(self.dbi.distributable(), 4)
         self.dbi.interactDistributeState()
         self.assertEqual(self.dbi.distributable(), 4)
-
-    def test_demonstrateWritingInteractions(self):
-        """Test what nodes are written to the database during the interaction calls."""
-        self.o.cs["burnSteps"] = 2  # make test insensitive to burn steps
-        r = self.r
-
-        # BOC/BOL doesn't write anything
-        r.p.cycle, r.p.timeNode = 0, 0
-        self.assertFalse(self.dbi.database.hasTimeStep(0, 0))
-        self.dbi.interactBOL()
-        self.assertFalse(self.dbi.database.hasTimeStep(0, 0))
-        self.dbi.interactBOC(0)
-        self.assertFalse(self.dbi.database.hasTimeStep(0, 0))
-
-        # but the first time node does
-        self.dbi.interactEveryNode(0, 0)
-        self.assertTrue(self.dbi.database.hasTimeStep(0, 0))
-
-        # EOC 0 shouldn't write, its written by last time node
-        r.p.cycle, r.p.timeNode = 0, self.o.cs["burnSteps"]
-        self.assertFalse(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode))
-        self.dbi.interactEOC(r.p.cycle)
-        self.assertFalse(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode))
-
-        # The last node of the step should write though
-        self.assertFalse(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode))
-        self.dbi.interactEveryNode(r.p.cycle, r.p.timeNode)
-        self.assertTrue(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode))
-
-        # EOL should also write, but lets write last time node first
-        r.p.cycle, r.p.timeNode = self.o.cs["nCycles"] - 1, self.o.cs["burnSteps"]
-        self.assertFalse(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode))
-        self.dbi.interactEveryNode(r.p.cycle, r.p.timeNode)
-        self.assertTrue(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode))
-
-        # now write EOL
-        self.assertFalse(self.dbi.database.hasTimeStep(r.p.cycle, r.p.timeNode, "EOL"))
-        self.dbi.interactEOL()  # this also saves and closes db
-
-        # reopen db to show EOL is written
-        with Database3(self._testMethodName + ".h5", "r") as db:
-            self.assertTrue(db.hasTimeStep(r.p.cycle, r.p.timeNode, "EOL"))
-            # and confirm that last time node is still there/separate
-            self.assertTrue(db.hasTimeStep(r.p.cycle, r.p.timeNode))
-
-    def test_interactEveryNodeReturnTightCoupling(self):
-        """Test that the DB is NOT written to if cs["tightCoupling"] = True."""
-        self.o.cs["tightCoupling"] = True
-        self.dbi.interactEveryNode(0, 0)
-        self.assertFalse(self.dbi.database.hasTimeStep(0, 0))
 
     def test_timeNodeLoop_tightCoupling(self):
         """Test that database is written out after the coupling loop has completed."""
@@ -364,7 +320,7 @@ class TestDatabaseReading(unittest.TestCase):
         def writeFlux(cycle, node):
             for bi, b in enumerate(o.r.core.getBlocks()):
                 b.p.flux = 1e6 * bi + cycle * 100 + node
-                b.p.mgFlux = np.repeat(b.p.flux / 33, 33)
+                b.p.mgFlux = numpy.repeat(b.p.flux / 33, 33)
 
         o.interfaces.insert(0, MockInterface(o.r, o.cs, writeFlux))
         with o:
@@ -452,8 +408,8 @@ class TestDatabaseReading(unittest.TestCase):
                     self.assertEqual(c1.name, c2.name)
                     if isinstance(c1.spatialLocator, grids.MultiIndexLocation):
                         assert_equal(
-                            np.array(c1.spatialLocator.indices),
-                            np.array(c2.spatialLocator.indices),
+                            numpy.array(c1.spatialLocator.indices),
+                            numpy.array(c2.spatialLocator.indices),
                         )
                     else:
                         assert_equal(
@@ -490,8 +446,8 @@ class TestDatabaseReading(unittest.TestCase):
         b1 = self.r.core.getFirstBlock(Flags.FUEL)
         b2 = r2.core.getFirstBlock(Flags.FUEL)
 
-        self.assertIsInstance(b1.p.mgFlux, np.ndarray)
-        self.assertIsInstance(b2.p.mgFlux, np.ndarray)
+        self.assertIsInstance(b1.p.mgFlux, numpy.ndarray)
+        self.assertIsInstance(b2.p.mgFlux, numpy.ndarray)
         assert_allclose(b1, b2)
 
         c1 = b1.getComponent(Flags.FUEL)

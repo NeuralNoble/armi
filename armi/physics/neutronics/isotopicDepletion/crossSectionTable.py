@@ -24,7 +24,7 @@ model doesn't need to import the isotopicDepletionInterface to function.
 import collections
 from typing import List
 
-import numpy as np
+import numpy
 
 from armi.nucDirectory import nucDir
 
@@ -106,7 +106,7 @@ class CrossSectionTable(collections.OrderedDict):
             microMultiGroupXS.np,
         )
 
-        oneGroupXS = np.asarray(mgCrossSections).dot(mgFlux) / totalFlux
+        oneGroupXS = numpy.asarray(mgCrossSections).dot(mgFlux) / totalFlux
 
         oneGroupXSbyName = {xsType: xs for xsType, xs in zip(xsTypes, oneGroupXS)}
         oneGroupXSbyName["n3n"] = 0.0

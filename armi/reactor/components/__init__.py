@@ -29,13 +29,13 @@ These objects hold the dimensions, temperatures, composition, and shape of react
 # ruff: noqa: F405
 import math
 
-import numpy as np
+import numpy
 
 from armi import runLog
-from armi.reactor.components.component import *  # noqa: F403
-from armi.reactor.components.basicShapes import *  # noqa: F403
-from armi.reactor.components.complexShapes import *  # noqa: F403
-from armi.reactor.components.volumetricShapes import *  # noqa: F403
+from armi.reactor.components.component import *  # noqa: undefined-local-with-import-star
+from armi.reactor.components.basicShapes import *  # noqa: undefined-local-with-import-star
+from armi.reactor.components.complexShapes import *  # noqa: undefined-local-with-import-star
+from armi.reactor.components.volumetricShapes import *  # noqa: undefined-local-with-import-star
 
 
 def factory(shape, bcomps, kwargs):
@@ -132,7 +132,7 @@ class UnshapedComponent(Component):
         material,
         Tinput,
         Thot,
-        area=np.NaN,
+        area=numpy.NaN,
         modArea=None,
         isotopics=None,
         mergeWith=None,
@@ -217,12 +217,12 @@ class UnshapedVolumetricComponent(UnshapedComponent):
         material,
         Tinput,
         Thot,
-        area=np.NaN,
+        area=numpy.NaN,
         op=None,
         isotopics=None,
         mergeWith=None,
         components=None,
-        volume=np.NaN,
+        volume=numpy.NaN,
     ):
         Component.__init__(
             self,
@@ -358,22 +358,25 @@ class DerivedShape(UnshapedComponent):
 
         Notes
         -----
-        If a parent exists, this will iterate over it and then determine both the volume and area
-        based on its context within the scope of the parent object by considering the volumes and
-        areas of the surrounding components.
+        If a parent exists, this will iterate over it and then determine
+        both the volume and area based on its context within the scope
+        of the parent object by considering the volumes and areas of
+        the surrounding components.
 
-        Since some components are volumetric shapes, this must consider the volume so that it wraps
-        around in all three dimensions.
+        Since some components are volumetric shapes, this must consider the volume
+        so that it wraps around in all three dimensions.
 
-        But there are also situations where we need to handle zero-height blocks with purely 2D
-        components. Thus we track area and volume fractions here when possible.
+        But there are also situations where we need to handle zero-height blocks
+        with purely 2D components. Thus we track area and volume fractions here
+        when possible.
         """
         if self.parent is None:
             raise ValueError(
                 f"Cannot compute volume/area of {self} without a parent object."
             )
 
-        # Determine the volume/areas of the non-derived shape components within the parent.
+        # Determine the volume/areas of the non-derived shape components
+        # within the parent.
         siblingVolume = 0.0
         siblingArea = 0.0
         for sibling in self.parent.getChildren():
@@ -388,7 +391,7 @@ class DerivedShape(UnshapedComponent):
             try:
                 if siblingArea is not None:
                     siblingArea += sibling.getArea()
-            except Exception:
+            except:  # noqa: bare-except
                 siblingArea = None
 
         remainingVolume = self.getMaxVolume() - siblingVolume

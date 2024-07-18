@@ -134,7 +134,7 @@ class TestTightCoupler(unittest.TestCase):
         Notes
         -----
         2D lists can end up being ragged as assemblies can have different number of blocks.
-        Ragged lists are easier to manage with lists as opposed to np.arrays,
+        Ragged lists are easier to manage with lists as opposed to numpy.arrays,
         namely, their dimension is preserved.
         """
         # show a situation where it doesn't converge

@@ -261,10 +261,11 @@ class Case:
         def caseMatches(case):
             if os.path.normcase(case.title) != os.path.normcase(title):
                 return False
-
-            return os.path.normcase(
-                os.path.abspath(case.directory)
-            ) == os.path.normcase(os.path.abspath(dirName))
+            if os.path.normcase(os.path.abspath(case.directory)) != os.path.normcase(
+                os.path.abspath(dirName)
+            ):
+                return False
+            return True
 
         return {case for case in self._caseSuite if caseMatches(case)}
 

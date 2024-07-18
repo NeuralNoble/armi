@@ -61,10 +61,10 @@ class JaggedArray:
                 else:
                     offsets.append(offset)
                     try:
-                        npArray = np.array(arr)
-                        shapes.append(npArray.shape)
-                        offset += npArray.size
-                        flattenedArray.extend(npArray.flatten())
+                        numpyArray = np.array(arr)
+                        shapes.append(numpyArray.shape)
+                        offset += numpyArray.size
+                        flattenedArray.extend(numpyArray.flatten())
                     except:  # noqa: E722
                         # numpy might fail if it's jagged
                         flattenedList = self.flatten(arr)
@@ -108,7 +108,7 @@ class JaggedArray:
     @staticmethod
     def flatten(x):
         """
-        Recursively flatten an iterable (list, tuple, or np.ndarray).
+        Recursively flatten an iterable (list, tuple, or numpy.ndarray).
 
         x : list, tuple, np.ndarray
             An iterable. Can be a nested iterable in which the elements
@@ -173,19 +173,17 @@ class JaggedArray:
             List of numpy arrays with varying dimensions (i.e., jagged arrays)
         """
         unpackedJaggedData: List[Optional[np.ndarray]] = []
-        shapeIndices = [i for i, x in enumerate(self.shapes) if sum(x) != 0]
-        numElements = len(shapeIndices) + len(self.nones)
+        numElements = len(self.offsets) + len(self.nones)
         j = 0  # non-None element counter
         for i in range(numElements):
             if i in self.nones:
                 unpackedJaggedData.append(None)
             else:
-                k = shapeIndices[j]
                 unpackedJaggedData.append(
                     np.ndarray(
-                        self.shapes[k],
+                        self.shapes[j],
                         dtype=self.dtype,
-                        buffer=self.flattenedArray[self.offsets[k] :],
+                        buffer=self.flattenedArray[self.offsets[j] :],
                     )
                 )
                 j += 1

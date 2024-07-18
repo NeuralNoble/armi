@@ -78,13 +78,7 @@ __all__ = [
 ]
 
 
-def loadOperator(
-    pathToDb,
-    loadCycle,
-    loadNode,
-    statePointName=None,
-    allowMissing=False,
-):
+def loadOperator(pathToDb, loadCycle, loadNode, allowMissing=False):
     """
     Return an operator given the path to a database.
 
@@ -96,9 +90,6 @@ def loadOperator(
         The cycle to load the reactor state from.
     loadNode : int
         The time node to load the reactor from.
-    statePointName: str
-        State point name at the end, E.G. `EOC` or `EOL`.
-        Full name would be C0N2EOC, see database3.getH5GroupName
     allowMissing : bool
         Whether to emit a warning, rather than crash if reading a database
         with undefined parameters. Default False.
@@ -146,12 +137,7 @@ def loadOperator(
         cs = db.loadCS()
         thisCase = cases.Case(cs)
 
-        r = db.load(
-            loadCycle,
-            loadNode,
-            statePointName=statePointName,
-            allowMissing=allowMissing,
-        )
+        r = db.load(loadCycle, loadNode, allowMissing=allowMissing)
 
     o = thisCase.initializeOperator(r=r)
     runLog.important(

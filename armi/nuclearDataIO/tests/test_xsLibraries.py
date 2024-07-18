@@ -18,7 +18,7 @@ import os
 import traceback
 import unittest
 
-import numpy as np
+import numpy
 from six.moves import cPickle
 
 from armi.nucDirectory import nuclideBases
@@ -83,7 +83,7 @@ class TestXSLibrary(TempFileMixin):
             cls.xsLib.merge(copy.deepcopy(cls.isotxsAA))
             cls.xsLib.merge(copy.deepcopy(cls.gamisoAA))
             cls.xsLib.merge(copy.deepcopy(cls.pmatrxAA))
-        except Exception:
+        except:  # noqa: bare-except
             cls.xsLibGenerationErrorStack = traceback.format_exc()
 
     def test_canPickleAndUnpickleISOTXS(self):
@@ -287,14 +287,9 @@ class TestGetISOTXSFilesInWorkingDirectory(unittest.TestCase):
         self.assertEqual(set(), container & set(shouldNotBeThere))
 
 
+# NOTE: This is just a base class, so it isn't run directly.
 class TestXSlibraryMerging(TempFileMixin):
-    """
-    A shared class that defines tests that should be true for all IsotxsLibrary merging.
-
-    Notes
-    -----
-    This is just a base class, so it isn't run directly.
-    """
+    """A shared class that defines tests that should be true for all IsotxsLibrary merging."""
 
     @classmethod
     def setUpClass(cls):
@@ -360,8 +355,8 @@ class TestXSlibraryMerging(TempFileMixin):
 
     def test_cannotMergeXSLibxWithDifferentGroupStructure(self):
         dummyXsLib = xsLibraries.IsotxsLibrary()
-        dummyXsLib.neutronEnergyUpperBounds = np.array([1, 2, 3])
-        dummyXsLib.gammaEnergyUpperBounds = np.array([1, 2, 3])
+        dummyXsLib.neutronEnergyUpperBounds = numpy.array([1, 2, 3])
+        dummyXsLib.gammaEnergyUpperBounds = numpy.array([1, 2, 3])
         with self.assertRaises(properties.ImmutablePropertyError):
             dummyXsLib.merge(self.libCombined)
 
@@ -443,7 +438,7 @@ class Pmatrx_merge_Tests(TestXSlibraryMerging):
 
     def test_cannotMergeXSLibsWithDifferentGammaGroupStructures(self):
         dummyXsLib = xsLibraries.IsotxsLibrary()
-        dummyXsLib.gammaEnergyUpperBounds = np.array([1, 2, 3])
+        dummyXsLib.gammaEnergyUpperBounds = numpy.array([1, 2, 3])
         with self.assertRaises(properties.ImmutablePropertyError):
             dummyXsLib.merge(self.libCombined)
 

@@ -151,35 +151,36 @@ class DatabaseInterface(interfaces.Interface):
         if self.o.cs["tightCoupling"]:
             # h5 cant handle overwriting so we skip here and write once the tight coupling loop has completed
             return
-        self.writeDBEveryNode()
+        self.writeDBEveryNode(cycle, node)
 
-    def writeDBEveryNode(self):
+    def writeDBEveryNode(self, cycle, node):
         """Write the database at the end of the time node."""
-        self.r.core.p.minutesSinceStart = (time.time() - self.r.core.timeOfStart) / 60.0
-        self._db.writeToDB(self.r)
-        if self.cs[CONF_SYNC_AFTER_WRITE]:
-            self._db.syncToSharedFolder()
+        # skip writing for last burn step since it will be written at interact EOC
+        if node < self.o.burnSteps[cycle]:
+            self.r.core.p.minutesSinceStart = (
+                time.time() - self.r.core.timeOfStart
+            ) / 60.0
+            self._db.writeToDB(self.r)
+            if self.cs[CONF_SYNC_AFTER_WRITE]:
+                self._db.syncToSharedFolder()
 
     def interactEOC(self, cycle=None):
-        """
-        Dont write; this state doesn't tend to be important since its decay only step.
-
-        Notes
-        -----
-        The same time is available at start of next cycle.
-        """
-        return
+        """In case anything changed since last cycle (e.g. rxSwing), update DB. (End of Cycle)."""
+        # We cannot presume whether we are at EOL based on cycle and cs["nCycles"],
+        # since cs["nCycles"] is not a difinitive indicator of EOL; ultimately the
+        # Operator has the final say.
+        if not self.o.atEOL:
+            self.r.core.p.minutesSinceStart = (
+                time.time() - self.r.core.timeOfStart
+            ) / 60.0
+            self._db.writeToDB(self.r)
 
     def interactEOL(self):
         """DB's should be closed at run's end. (End of Life)."""
         # minutesSinceStarts should include as much of the ARMI run as possible so EOL
         # is necessary, too.
         self.r.core.p.minutesSinceStart = (time.time() - self.r.core.timeOfStart) / 60.0
-        self._db.writeToDB(self.r, "EOL")
-        self.closeDB()
-
-    def closeDB(self):
-        """Close the DB, writing to file."""
+        self._db.writeToDB(self.r)
         self._db.close(True)
 
     def interactError(self):
@@ -193,7 +194,7 @@ class DatabaseInterface(interfaces.Interface):
             # writing
             self._db.writeToDB(self.r, "error")
             self._db.close(False)
-        except Exception:  # we're already responding to an error
+        except:  # noqa: bare-except; we're already responding to an error
             pass
 
     def interactDistributeState(self) -> None:

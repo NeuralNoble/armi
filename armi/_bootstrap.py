@@ -49,7 +49,7 @@ def _addCustomTabulateTables():
 _addCustomTabulateTables()
 
 
-from armi.nucDirectory import nuclideBases  # noqa: E402
+from armi.nucDirectory import nuclideBases  # noqa: module-import-not-at-top-of-file
 
 # Nuclide bases get built explicitly here to have better determinism
 # about when they get instantiated. The burn chain is not applied

@@ -33,7 +33,7 @@ import os
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
+import numpy
 
 from armi import materials
 from armi import runLog
@@ -267,7 +267,7 @@ class FuelAssemNumModifier(GeometryChanger):
         # first look through the core and finds the one farthest from the center
         maxDist = 0.0
         for assem in r.core.getAssemblies():
-            dist = np.linalg.norm(
+            dist = numpy.linalg.norm(
                 assem.spatialLocator.getGlobalCoordinates()
             )  # get distance from origin
             dist = round(
@@ -301,7 +301,7 @@ class FuelAssemNumModifier(GeometryChanger):
             assem = r.core.childrenByLocator.get(
                 locator
             )  # check on assemblies, moving radially outward
-            dist = np.linalg.norm(locator.getGlobalCoordinates())
+            dist = numpy.linalg.norm(locator.getGlobalCoordinates())
             dist = round(dist, 6)
             if dist <= newRingDist:  # check distance
                 if assem is None:  # no assembly in that position, add assembly
@@ -532,7 +532,7 @@ class HexToRZThetaConverter(GeometryConverter):
         # replace temporary index-based ring indices with actual radial distances
         self.convReactor.core.spatialGrid._bounds = (
             self.convReactor.core.spatialGrid._bounds[0],
-            np.array(radialMeshCm),
+            numpy.array(radialMeshCm),
             self.convReactor.core.spatialGrid._bounds[2],
         )
 
@@ -1263,7 +1263,7 @@ class ThirdCoreHexToFullCoreChanger(GeometryChanger):
         for param in self.listOfVolIntegratedParamsToScale:
             if b.p[param] is None:
                 continue
-            if type(b.p[param]) is list:
+            if type(b.p[param]) == list:
                 # some params like volume-integrated mg flux are lists
                 b.p[param] = [op(val, 3) for val in b.p[param]]
             else:
@@ -1595,7 +1595,7 @@ def _scaleParamsInBlock(b, bSymmetric, completeListOfParamsToScale):
     """Scale volume-integrated params to include their identical symmetric assemblies."""
     listOfVolumeIntegratedParamsToScale, fluxParamsToScale = completeListOfParamsToScale
     for paramName in [
-        pn for pn in listOfVolumeIntegratedParamsToScale if np.any(b.p[pn])
+        pn for pn in listOfVolumeIntegratedParamsToScale if numpy.any(b.p[pn])
     ]:
         runLog.debug(
             "Scaling {} in symmetric identical assemblies".format(paramName),

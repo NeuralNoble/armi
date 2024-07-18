@@ -23,7 +23,7 @@ import collections
 import copy
 import math
 
-import numpy as np
+import numpy
 
 from armi import nuclideBases
 from armi import runLog
@@ -93,7 +93,7 @@ class Block(composites.Composite):
         self.p.height = height
         self.p.heightBOL = height
 
-        self.p.orientation = np.array((0.0, 0.0, 0.0))
+        self.p.orientation = numpy.array((0.0, 0.0, 0.0))
 
         self.points = []
         self.macros = None
@@ -247,7 +247,7 @@ class Block(composites.Composite):
             )
 
         # Compute component areas
-        cladID = np.mean([clad.getDimension("id", cold=cold) for clad in clads])
+        cladID = numpy.mean([clad.getDimension("id", cold=cold) for clad in clads])
         innerCladdingArea = (
             math.pi * (cladID**2) / 4.0 * self.getNumComponents(Flags.FUEL)
         )
@@ -335,7 +335,7 @@ class Block(composites.Composite):
         flux = composites.ArmiObject.getMgFlux(
             self, adjoint=adjoint, average=False, volume=volume, gamma=gamma
         )
-        if average and np.any(self.p.lastMgFlux):
+        if average and numpy.any(self.p.lastMgFlux):
             volume = volume or self.getVolume()
             lastFlux = self.p.lastMgFlux / volume
             flux = (flux + lastFlux) / 2.0
@@ -382,7 +382,7 @@ class Block(composites.Composite):
                 thisPinFlux.append(fluxes[g][pinLoc - 1])
             pinFluxes.append(thisPinFlux)
 
-        pinFluxes = np.array(pinFluxes)
+        pinFluxes = numpy.array(pinFluxes)
         if gamma:
             if adjoint:
                 raise ValueError("Adjoint gamma flux is currently unsupported.")
@@ -1208,7 +1208,9 @@ class Block(composites.Composite):
             and c.hasFlags(Flags.GAP)
             and c.getDimension("id") == 0
         )
-        return self.hasFlags([Flags.PLENUM, Flags.ACLP]) and cIsCenterGapGap
+        if self.hasFlags([Flags.PLENUM, Flags.ACLP]) and cIsCenterGapGap:
+            return True
+        return False
 
     def getPitch(self, returnComp=False):
         """
@@ -1361,9 +1363,9 @@ class Block(composites.Composite):
         lib = self.core.lib
         flux = self.getMgFlux(gamma=gamma)
         flux = [fi / max(flux) for fi in flux]
-        mfpNumerator = np.zeros(len(flux))
-        absMfpNumerator = np.zeros(len(flux))
-        transportNumerator = np.zeros(len(flux))
+        mfpNumerator = numpy.zeros(len(flux))
+        absMfpNumerator = numpy.zeros(len(flux))
+        transportNumerator = numpy.zeros(len(flux))
 
         numDensities = self.getNumberDensities()
 
@@ -1506,7 +1508,7 @@ class Block(composites.Composite):
 
         Returns
         -------
-        integratedFlux : np.array
+        integratedFlux : numpy.array
             multigroup neutron tracklength in [n-cm/s]
         """
         if adjoint:
@@ -1518,7 +1520,7 @@ class Block(composites.Composite):
         else:
             integratedFlux = self.p.mgFlux
 
-        return np.array(integratedFlux)
+        return numpy.array(integratedFlux)
 
     def getLumpedFissionProductCollection(self):
         """
@@ -1606,7 +1608,7 @@ class Block(composites.Composite):
 
         Returns
         -------
-        totalEnergyGenConstant: np.array
+        totalEnergyGenConstant: numpy.array
             Total (fission + capture) energy generation group constants (Joules/cm)
         """
         return (
@@ -1623,7 +1625,7 @@ class Block(composites.Composite):
 
         Returns
         -------
-        fissionEnergyGenConstant: np.array
+        fissionEnergyGenConstant: numpy.array
             Energy generation group constants (Joules/cm)
 
         Raises
@@ -1650,7 +1652,7 @@ class Block(composites.Composite):
 
         Returns
         -------
-        fissionEnergyGenConstant: np.array
+        fissionEnergyGenConstant: numpy.array
             Energy generation group constants (Joules/cm)
 
         Raises
@@ -1674,7 +1676,7 @@ class Block(composites.Composite):
 
         Returns
         -------
-        energyDepConstants: np.array
+        energyDepConstants: numpy.array
             Neutron energy generation group constants (in Joules/cm)
 
         Raises
@@ -1698,7 +1700,7 @@ class Block(composites.Composite):
 
         Returns
         -------
-        energyDepConstants: np.array
+        energyDepConstants: numpy.array
             Energy generation group constants (in Joules/cm)
 
         Raises
@@ -1979,7 +1981,7 @@ class HexBlock(Block):
             )
 
         powerKey = f"linPowByPin{powerKeySuffix}"
-        self.p[powerKey] = np.zeros(numPins)
+        self.p[powerKey] = numpy.zeros(numPins)
 
         # Loop through rings. The *pinLocation* parameter is only accessed for fueled
         # blocks; it is assumed that non-fueled blocks do not use a rotation map.
@@ -2048,9 +2050,9 @@ class HexBlock(Block):
                         f"on {param}"
                     )
                     runLog.warning(msg)
-            elif isinstance(self.p[param], np.ndarray):
+            elif isinstance(self.p[param], numpy.ndarray):
                 if len(self.p[param]) == 6:
-                    self.p[param] = np.concatenate(
+                    self.p[param] = numpy.concatenate(
                         (self.p[param][-rotNum:], self.p[param][:-rotNum])
                     )
                 elif len(self.p[param]) == 0:
@@ -2289,7 +2291,7 @@ class HexBlock(Block):
     def getRotationNum(self):
         """Get index 0 through 5 indicating number of rotations counterclockwise around the z-axis."""
         return (
-            np.rint(self.p.orientation[2] / 360.0 * 6) % 6
+            numpy.rint(self.p.orientation[2] / 360.0 * 6) % 6
         )  # assume rotation only in Z
 
     def setRotationNum(self, rotNum):
@@ -2316,7 +2318,7 @@ class HexBlock(Block):
         """
         try:
             symmetry = self.parent.spatialLocator.grid.symmetry
-        except Exception:
+        except:  # noqa: bare-except
             return 1.0
         if (
             symmetry.domain == geometry.DomainType.THIRD_CORE
@@ -2549,7 +2551,7 @@ class HexBlock(Block):
             correctionFactor = 1.0
             if isinstance(c, Helix):
                 # account for the helical wire wrap
-                correctionFactor = np.hypot(
+                correctionFactor = numpy.hypot(
                     1.0,
                     math.pi
                     * c.getDimension("helixDiameter")

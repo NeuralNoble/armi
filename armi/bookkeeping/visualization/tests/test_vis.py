@@ -15,7 +15,7 @@
 """Test report visualization."""
 import unittest
 
-import numpy as np
+import numpy
 from pyevtk.vtk import VtkTetra
 
 from armi import settings
@@ -41,12 +41,12 @@ class TestVtkMesh(unittest.TestCase):
         self.assertEqual(mesh.offsets.size, 0)
         self.assertEqual(mesh.cellTypes.size, 0)
 
-        verts = np.array(
+        verts = numpy.array(
             [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.25, 0.25, 0.5]]
         )
-        conn = np.array([0, 1, 2, 3])
-        offsets = np.array([4])
-        cellTypes = np.array([VtkTetra.tid])
+        conn = numpy.array([0, 1, 2, 3])
+        offsets = numpy.array([4])
+        cellTypes = numpy.array([VtkTetra.tid])
         newMesh = utils.VtkMesh(verts, conn, offsets, cellTypes)
 
         mesh.append(newMesh)

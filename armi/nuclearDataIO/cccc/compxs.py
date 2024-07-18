@@ -72,18 +72,19 @@ directional diffusion coefficient multipliers, respectively. Similary, the ``d<1
 values are the first, second, and third dimension directional diffusion coefficient
 additive terms, respectively.
 """
-from traceback import format_exc
 from scipy.sparse import csc_matrix
+from traceback import format_exc
+import numpy
 
 from armi import runLog
 from armi.nuclearDataIO import cccc
+from armi.utils.properties import unlockImmutableProperties, lockImmutableProperties
 from armi.nuclearDataIO.xsCollections import XSCollection
 from armi.nuclearDataIO.nuclearFileMetadata import (
     RegionXSMetadata,
     COMPXS_POWER_CONVERSION_FACTORS,
     REGIONXS_POWER_CONVERT_DIRECTIONAL_DIFF,
 )
-from armi.utils.properties import unlockImmutableProperties, lockImmutableProperties
 
 
 def _getRegionIO():
@@ -237,7 +238,7 @@ class _CompxsIO(cccc.Stream):
                 regionIO = _getRegionIO()(region, self, self._lib)
                 regionIO.rwRegionData()
             self._rw5DRecord()
-        except Exception:
+        except:  # noqa: bare-except
             raise OSError(
                 "Failed to {} {} \n\n\n{}".format(
                     "read" if self._isReading else "write", self, format_exc()
@@ -450,9 +451,9 @@ class _CompxsScatterMatrix:
         self.indptr.append(len(dataj) + self.indptr[-1])
 
     def makeSparse(self, sparseFunc=csc_matrix):
-        self.data = np.array(self.data, dtype="d")
-        self.indices = np.array(self.indices, dtype="d")
-        self.indptr = np.array(self.indptr, dtype="d")
+        self.data = numpy.array(self.data, dtype="d")
+        self.indices = numpy.array(self.indices, dtype="d")
+        self.indptr = numpy.array(self.indptr, dtype="d")
         return sparseFunc((self.data, self.indices, self.indptr), shape=self.shape)
 
 
@@ -569,14 +570,14 @@ class CompxsRegion:
         :py:meth:`makeScatteringMatrices`
         """
         for xs in self._primaryXS:
-            self.macros[xs] = np.zeros(numGroups)
+            self.macros[xs] = numpy.zeros(numGroups)
 
         self.macros.totalScatter = _CompxsScatterMatrix((numGroups, numGroups))
 
         if self.metadata["chiFlag"]:
-            self.macros.fission = np.zeros(numGroups)
-            self.macros.nuSigF = np.zeros(numGroups)
-            self.macros.chi = np.zeros((numGroups, self.metadata["chiFlag"]))
+            self.macros.fission = numpy.zeros(numGroups)
+            self.macros.nuSigF = numpy.zeros(numGroups)
+            self.macros.chi = numpy.zeros((numGroups, self.metadata["chiFlag"]))
 
         if self._getFileMetadata()["maxScatteringOrder"]:
             for scatterOrder in range(
@@ -588,7 +589,7 @@ class CompxsRegion:
 
         for datum in REGIONXS_POWER_CONVERT_DIRECTIONAL_DIFF:
             self.metadata[datum] = (
-                np.zeros(numGroups) if "Additive" in datum else np.ones(numGroups)
+                numpy.zeros(numGroups) if "Additive" in datum else numpy.ones(numGroups)
             ).tolist()
 
     def makeScatteringMatrices(self):

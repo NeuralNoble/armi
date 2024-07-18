@@ -246,7 +246,7 @@ class EntryPoint:
             if additionalAlias is not None:
                 aliases.append(additionalAlias)
 
-            isListType = settingsInstance.underlyingType is list
+            isListType = settingsInstance.underlyingType == list
 
             try:
                 self.parser.add_argument(

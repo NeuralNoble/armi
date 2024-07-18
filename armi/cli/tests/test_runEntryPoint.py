@@ -252,8 +252,6 @@ class TestExtractInputs(unittest.TestCase):
                 self.assertIn("Writing settings to", mock.getStdout())
                 self.assertIn("Writing blueprints to", mock.getStdout())
 
-            db.close()
-
 
 class TestInjectInputs(unittest.TestCase):
     def test_injectInputsBasics(self):
@@ -455,5 +453,3 @@ class TestVisFileEntryPointCommand(unittest.TestCase):
             self.assertIsNone(vf.args.min_node)
             self.assertIsNone(vf.args.max_node)
             self.assertEqual(vf.args.output_name, "test_visFileEntryPointBasics")
-
-            self.db.close()

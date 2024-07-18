@@ -32,18 +32,7 @@ it is important to remember to us the ``black`` formatter before pushing any cod
 to ARMI on github.com will be automatically checked to see if they conform to the ``black`` code formatter standards.
 
 The ``black`` formatter provides 100% consistency in ARMI for: whitespace, line length, trailing commas, and string
-formatting. And it is easy to run on the command line::
-
-    black .
-
-Address the ruff warnings
-=========================
-ARMI also uses the amazing Python linter `ruff <https://docs.astral.sh/ruff/>`_. Again, any new code you add must have
-zero ``ruff`` warnings or errors.
-
-This is very easy to run on the command line::
-
-    ruff check .
+formatting.
 
 Remove commented-out code
 =========================
@@ -244,7 +233,7 @@ Place a single line between each of these groups, for example:
     import os
     import math
 
-    import numpy as np
+    import numpy
     from matplotlib import pyplot
 
     from armi import runLog
@@ -303,6 +292,11 @@ ARMI developers **shall** use one of the following well-defined, Python-supporte
 
 .yaml
     YAML files are like JSON files but can have comments in them.
+
+Address the ruff warnings
+=========================
+Our pull request system integrates with the automatic code checker, ruff. Any new code you add must have
+zero ruff warnings or errors.
 
 General do's and don'ts
 =======================

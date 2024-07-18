@@ -14,7 +14,7 @@
 from math import sqrt
 from typing import Tuple, List, Optional
 
-import numpy as np
+import numpy
 
 from armi.reactor import geometry
 from armi.utils import hexagon
@@ -31,7 +31,7 @@ from armi.reactor.grids.structuredGrid import StructuredGrid
 COS30 = sqrt(3) / 2.0
 SIN30 = 1.0 / 2.0
 # going counter-clockwise from "position 1" (top right)
-TRIANGLES_IN_HEXAGON = np.array(
+TRIANGLES_IN_HEXAGON = numpy.array(
     [
         (+COS30, SIN30),
         (+0, 1.0),
@@ -456,7 +456,7 @@ class HexGrid(StructuredGrid):
         identicals = [(-i - j, i), (j, -i - j)]
         return identicals
 
-    def triangleCoords(self, indices: IJKType) -> np.ndarray:
+    def triangleCoords(self, indices: IJKType) -> numpy.ndarray:
         """
         Return 6 coordinate pairs representing the centers of the 6 triangles in a
         hexagon centered here.
@@ -501,7 +501,7 @@ class HexGrid(StructuredGrid):
 
     def changePitch(self, newPitchCm: float):
         """Change the hex pitch."""
-        unitSteps = np.array(HexGrid._getRawUnitSteps(newPitchCm, self.cornersUp))
+        unitSteps = numpy.array(HexGrid._getRawUnitSteps(newPitchCm, self.cornersUp))
         self._unitSteps = unitSteps[self._stepDims]
 
     def locatorInDomain(self, locator, symmetryOverlap: Optional[bool] = False) -> bool:
@@ -541,7 +541,10 @@ class HexGrid(StructuredGrid):
             # Even ring; upper edge assem included.
             maxPos2 += 1
 
-        return bool(pos <= maxPos1 or pos >= maxPos2)
+        if pos <= maxPos1 or pos >= maxPos2:
+            return True
+
+        return False
 
     def generateSortedHexLocationList(self, nLocs: int):
         """
@@ -566,7 +569,7 @@ class HexGrid(StructuredGrid):
         # round to avoid differences due to floating point math
         locList.sort(
             key=lambda loc: (
-                round(np.linalg.norm(loc.getGlobalCoordinates()), 6),
+                round(numpy.linalg.norm(loc.getGlobalCoordinates()), 6),
                 loc.i,
                 loc.j,
             )
